@@ -1,6 +1,11 @@
 # Calculator REST API — End-to-End CI/CD Pipeline
 
-**CSE 816 Software Production Engineering — Mini-Project**
+**CSE 816 Software Production Engineering — Mini-Project** · Harjot Singh (IMT2023064)
+
+| | |
+|---|---|
+| Docker Hub image | https://hub.docker.com/r/harjotsingh12312/calculator-api |
+| Report (PDF) | [docs/SPE_Mini_Project_Report.pdf](docs/SPE_Mini_Project_Report.pdf) |
 
 A small Spring Boot Calculator REST API with an automated DevOps pipeline:
 **GitHub → Jenkins → Maven build & JUnit tests → Docker image → Docker Hub → Docker Compose deployment (Nginx + 2 API replicas)**.
@@ -64,11 +69,13 @@ Numbers use `BigDecimal`, so `0.1 + 0.2` returns exactly `0.3`.
 ├── src/test/java/com/spe/calculator/
 │   ├── service/CalculatorServiceTest.java       # JUnit 5 unit tests
 │   └── controller/CalculatorControllerIntegrationTest.java  # MockMvc tests
-├── pom.xml, mvnw, mvnw.cmd, .mvn/               # Maven build + wrapper
+├── pom.xml, mvnw, mvnw.cmd, .mvn/               # Maven build + wrapper, JaCoCo coverage
 ├── Dockerfile, .dockerignore                    # multi-stage image
-├── docker-compose.yml, nginx/nginx.conf         # deployment stack
+├── docker-compose.yml                           # deployment stack (2 API replicas + proxy)
+├── nginx/Dockerfile, nginx/nginx.conf           # reverse-proxy image
 ├── Jenkinsfile                                  # CI/CD pipeline
-└── docs/REPORT.md                               # project report
+├── jenkins/                                     # Dockerised Jenkins (plugins + Configuration as Code)
+└── docs/                                        # report PDF, screenshots, report generator
 ```
 
 ## Build, test and run locally
@@ -77,7 +84,8 @@ Prerequisites: JDK 21+ and Docker (with Compose v2). Maven itself is **not** req
 
 ```bash
 ./mvnw clean package          # compile + run tests + build target/calculator-api.jar
-./mvnw test                   # tests only; JUnit XML in target/surefire-reports/
+./mvnw test                   # tests + coverage; JUnit XML in target/surefire-reports/,
+                              # coverage report in target/site/jacoco/index.html (build fails below 80% lines)
 java -jar target/calculator-api.jar
 curl "http://localhost:8080/api/v1/add?a=2&b=3"
 ```
@@ -162,7 +170,7 @@ The container uses the host's Docker daemon via `/var/run/docker.sock`, so the p
 |---|---|
 | Checkout | `checkout scm` pulls the commit that triggered the build |
 | Build | `./mvnw -B clean package -DskipTests` |
-| Test | `./mvnw -B test` and publishes `target/surefire-reports/*.xml` with the `junit` step. A failing test fails the build |
+| Test | `./mvnw -B test`. Publishes JUnit results (`junit`) and JaCoCo coverage (`recordCoverage`). A failing test or line coverage below 80% fails the build |
 | Docker Build | `docker build -t <user>/calculator-api:<BUILD_NUMBER> -t <user>/calculator-api:latest .` and `docker compose build proxy` |
 | Push | `docker login` using `dockerhub-creds` (token piped via `--password-stdin`), then pushes both tags |
 | Deploy | `docker compose up -d --no-build --remove-orphans --wait`, then checks health and an API call through the proxy |
@@ -172,7 +180,11 @@ The container uses the host's Docker daemon via `/var/run/docker.sock`, so the p
 
 ## Docker Hub
 
-Image: `https://hub.docker.com/r/<your-dockerhub-username>/calculator-api`
+Image: https://hub.docker.com/r/harjotsingh12312/calculator-api (tagged with every Jenkins build number, plus `latest`)
+
+```bash
+docker run -d -p 8080:8080 harjotsingh12312/calculator-api:latest
+```
 
 ## Security notes
 
