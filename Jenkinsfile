@@ -1,6 +1,7 @@
 // Declarative CI/CD pipeline: Checkout -> Build -> Test -> Docker Build -> Push -> Deploy
 //
-// One-time Jenkins setup (see README "Jenkins setup"):
+// Jenkins itself is defined in jenkins/ (Docker + Configuration as Code), which sets up everything below.
+// Manual equivalent (see README "Jenkins setup"):
 //   * Credentials: "Username with password" with ID 'dockerhub-creds' (Docker Hub username + access token)
 //   * Global env vars (Manage Jenkins -> System -> Global properties):
 //       DOCKERHUB_USER = your Docker Hub username
@@ -14,6 +15,8 @@ pipeline {
     triggers {
         // Fired by the GitHub webhook (http://<jenkins>/github-webhook/)
         githubPush()
+        // Fallback when GitHub cannot reach Jenkins (e.g. Jenkins on a laptop): poll every 2 minutes
+        pollSCM('H/2 * * * *')
     }
 
     options {
@@ -58,6 +61,8 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh 'docker build -t "$IMAGE_NAME:$IMAGE_TAG" -t "$IMAGE_NAME:latest" .'
+                // Nginx reverse proxy image with the config baked in
+                sh 'docker compose build proxy'
             }
         }
 
