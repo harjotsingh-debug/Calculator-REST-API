@@ -9,3 +9,4 @@ email-ext
 mailer
 credentials-binding
 timestamper
+matrix-project
