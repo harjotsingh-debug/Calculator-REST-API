@@ -180,7 +180,7 @@ $ curl "localhost:8090/actuator/health"
 {"status":"UP","groups":["liveness","readiness"]}                                 [HTTP 200]"""
 
 BUILD_7_LOG = """Started by an SCM change
-Checking out Revision e80d181 (refs/remotes/origin/main)
+Checking out refs/remotes/origin/main
 [Test]   Tests run: 19, Failures: 0, Errors: 0, Skipped: 0 - BUILD SUCCESS
 [Push]   7: digest: sha256:fb29ba45b9fa...  latest: digest: sha256:fb29ba45b9fa...
 [Deploy] calculator-calculator-1, calculator-calculator-2, calculator-proxy-1: Healthy
@@ -193,7 +193,7 @@ def build():
     s = []
     s.append(p("End-to-End CI/CD Pipeline for a Calculator REST API", TITLE))
     s.append(p("CSE 816 Software Production Engineering - Mini-Project Report<br/>"
-               "M.Tech (CSE), Term I 2026-27 &nbsp;|&nbsp; Faculty: Prof. B. Thangaraju", SUB))
+               "iMTech (CSE), Term I 2026-27 &nbsp;|&nbsp; Faculty: Prof. B. Thangaraju", SUB))
     s.append(Spacer(1, 8))
     s.append(table([
         ["Student", f"{STUDENT} &nbsp;&nbsp;&nbsp; <b>Roll No.:</b> {ROLL_NO}"],
