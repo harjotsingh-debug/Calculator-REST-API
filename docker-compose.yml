@@ -29,7 +29,8 @@ services:
   proxy:
     # Config is baked into a small image (nginx/Dockerfile) rather than bind-mounted,
     # so deployment also works when Compose is driven from inside the Jenkins container.
-    image: calculator-proxy:latest
+    # Tagged with the build number like the API image, so each deploy runs the proxy built in that build.
+    image: calculator-proxy:${IMAGE_TAG:-latest}
     build: ./nginx
     ports:
       - "${PROXY_PORT:-8090}:80"
