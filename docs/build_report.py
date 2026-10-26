@@ -291,7 +291,7 @@ def build():
         "<b>Early red builds (#3-#5 in the Stage View):</b> Jenkins was first validated against a local checkout "
         "with placeholder Docker Hub credentials, so Push failed with <i>unauthorized</i> and Deploy was skipped, "
         "as intended. Builds #1-#2 failed at checkout because of git's safe.directory ownership check on the "
-        "mounted repo. After the real token was configured, #6 and #7 passed end to end.",
+        "mounted repo. After the real token was configured, every build from #6 onwards passed end to end.",
         "<b>Host port conflicts:</b> 8080 and 8081 were already used by other local services, so Jenkins uses "
         "8085 and the proxy port is configurable (PROXY_PORT, default 8090).",
         "<b>Number formatting:</b> after removing trailing zeros, BigDecimal 10 serialised as 1E+1. Jackson's "
@@ -302,9 +302,12 @@ def build():
     s.append(p("Appendix - Screenshots and Evidence", H1))
     s.append(KeepTogether([p("A1 - Console highlights of build #7 (auto-triggered by a push)", CELL_B),
                            Preformatted(BUILD_7_LOG, CODE)]))
-    s.append(KeepTogether([p("A2 - Running containers after deployment", CELL_B), Preformatted(DOCKER_PS, CODE)]))
-    s.append(KeepTogether([p("A3 - Sample API responses through the Nginx proxy", CELL_B),
-                           Preformatted(API_CALLS, CODE)]))
+    # Real terminal screenshots replace the captured text when present
+    for name, text, caption in [("docker-ps.png", DOCKER_PS, "A2 - Running containers after deployment (docker ps)"),
+                                ("api-responses.png", API_CALLS, "A3 - Sample API responses through the Nginx proxy")]:
+        f = SHOTS / name
+        body = screenshot(f, max_h=9 * cm) if f.exists() else Preformatted(text, CODE)
+        s.append(KeepTogether([p(caption, CELL_B), Spacer(1, 3), body, Spacer(1, 8)]))
     stage = SHOTS / "jenkins-stage-view.png"
     if stage.exists():
         s.append(KeepTogether([screenshot(stage, max_h=14.5 * cm),
@@ -314,9 +317,7 @@ def build():
     extra = [("email.png", "A5 - Success e-mails for builds #6, #7 and #8 (email-ext via Gmail SMTP)"),
              ("dockerhub.png", "A6 - Public Docker Hub repository with build-number tags 6, 7, 8 and latest. Tags 7, 8 and "
               "latest share one digest: build #8 changed only docs/, which .dockerignore excludes, so every layer "
-              "came from cache and the image was identical."),
-             ("docker-ps.png", "A7 - docker ps"),
-             ("api-responses.png", "A8 - API responses")]
+              "came from cache and the image was identical.")]
     for name, caption in extra:
         f = SHOTS / name
         if f.exists():
