@@ -46,6 +46,15 @@ CODE = ParagraphStyle("Code", fontName="Courier", fontSize=7.4, leading=9.4, tex
                       borderPadding=6, leftIndent=6, rightIndent=6, spaceBefore=4, spaceAfter=8)
 
 
+def git_stats():
+    """Commit count on main and the feature branches already merged into it."""
+    import subprocess
+    run = lambda *a: subprocess.run(["git", *a], cwd=DOCS.parent, capture_output=True, text=True).stdout
+    commits = int(run("rev-list", "--count", "main").strip())
+    branches = sorted(b.strip(" *") for b in run("branch", "--merged", "main").splitlines() if "feature/" in b)
+    return commits, branches
+
+
 def p(text, style=BODY):
     return Paragraph(text, style)
 
@@ -199,7 +208,7 @@ def build():
         ["Student", f"{STUDENT} &nbsp;&nbsp;&nbsp; <b>Roll No.:</b> {ROLL_NO}"],
         ["GitHub repository", f'<link href="{GITHUB_URL}" color="#1d4ed8">{GITHUB_URL}</link>'],
         ["Docker Hub image", f'<link href="{DOCKERHUB_URL}" color="#1d4ed8">{DOCKERHUB_URL}</link>'],
-        ["Stack", "Java 21, Spring Boot 3.5, Maven, JUnit 5 / MockMvc, Git/GitHub, Jenkins, Docker, Docker Compose, Nginx"],
+        ["Stack", "Java 21, Spring Boot 3.5, Maven, JUnit 5 / MockMvc / JaCoCo, Git/GitHub, Jenkins, Docker, Docker Compose, Nginx"],
     ], [3.6 * cm, 13.4 * cm], header=False))
 
     s.append(p("1. Overview", H1))
@@ -230,6 +239,9 @@ def build():
         "divide-by-zero (including 0.0).",
         "<b>8 MockMvc integration tests</b> boot the full Spring context and hit the real endpoints, covering success, "
         "the three 400 cases and the health probe. All 19 run with <i>mvn test</i> and produce Surefire JUnit XML.",
+        "<b>JaCoCo coverage: 93% of lines.</b> Every controller, service, error-handler and model class is fully "
+        "covered, and all 4 branches in the service are covered. Only the one-line main() launcher is not. A JaCoCo "
+        "check fails the build if line coverage drops below 80%.",
     ]))
 
     s.append(p("4. Pipeline Stages (Jenkinsfile)", H1))
@@ -239,8 +251,9 @@ def build():
                     "GitHub cannot reach. disableConcurrentBuilds() prevents racing deploys."],
         ["Checkout", "checkout scm fetches the exact commit that triggered the build."],
         ["Build", "./mvnw -B clean package -DskipTests. The Maven wrapper pins the Maven version, so any agent builds identically."],
-        ["Test", "./mvnw -B test. The junit step publishes target/surefire-reports/*.xml (Test Result Trend). "
-                 "A failing test exits non-zero and fails the build before an image is produced."],
+        ["Test", "./mvnw -B test. The junit step publishes target/surefire-reports/*.xml (Test Result Trend), and "
+                 "recordCoverage publishes the JaCoCo report. A failing test, or coverage below 80%, exits non-zero "
+                 "and fails the build before an image is produced."],
         ["Docker Build", "docker build -t &lt;user&gt;/calculator-api:$BUILD_NUMBER -t ...:latest, plus "
                          "docker compose build proxy for the Nginx image."],
         ["Push", "withCredentials(usernamePassword 'dockerhub-creds'). The token comes from the Jenkins credentials "
@@ -271,9 +284,10 @@ def build():
     ]))
 
     s.append(p("6. Version Control Practices", H1))
-    s.append(p("The history has 17 commits, built up incrementally from scaffold to service, API, Docker, Compose, "
-               "Jenkins and docs. Four feature branches (feature/docker, feature/jenkins-pipeline, "
-               "feature/jenkins-docker, feature/actuator-info) were merged into main with --no-ff merge commits. "
+    commits, branches = git_stats()
+    s.append(p(f"The history has {commits}+ commits, built up incrementally from scaffold to service, API, Docker, "
+               f"Compose, Jenkins, coverage and docs. {len(branches)} feature branches ({', '.join(branches)}) were "
+               "merged into main with --no-ff merge commits. "
                "The .gitignore covers target/, IDE files, .env and key/credential files. No credentials exist in "
                "the repository, and all secrets live in the Jenkins credentials store."))
 
