@@ -1,0 +1,11 @@
+configuration-as-code
+job-dsl
+workflow-aggregator
+pipeline-stage-view
+git
+github
+junit
+email-ext
+mailer
+credentials-binding
+timestamper

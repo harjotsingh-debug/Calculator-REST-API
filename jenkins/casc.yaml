@@ -1,0 +1,77 @@
+# Jenkins Configuration as Code. Every ${VAR} comes from jenkins/.env, which is git-ignored,
+# so no secret is ever stored in the repository.
+jenkins:
+  systemMessage: "CSE 816 SPE: Calculator API CI/CD"
+  numExecutors: 2
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: DOCKERHUB_USER
+            value: "${DOCKERHUB_USER}"
+          - key: NOTIFY_EMAIL
+            value: "${NOTIFY_EMAIL}"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: dockerhub-creds
+              description: Docker Hub access token
+              username: "${DOCKERHUB_USER}"
+              password: "${DOCKERHUB_TOKEN}"
+          - usernamePassword:
+              scope: GLOBAL
+              id: smtp-creds
+              description: Gmail SMTP app password
+              username: "${SMTP_USER}"
+              password: "${SMTP_PASSWORD}"
+
+unclassified:
+  location:
+    url: "${JENKINS_URL}"
+    adminAddress: "${SMTP_USER}"
+  email-ext:
+    mailAccount:
+      smtpHost: smtp.gmail.com
+      smtpPort: "465"
+      useSsl: true
+      credentialsId: smtp-creds
+      address: "${SMTP_USER}"
+    defaultSuffix: ""
+
+jobs:
+  - script: |
+      pipelineJob('calculator-api') {
+        description('Calculator REST API: build, test, Docker image, Docker Hub push and Compose deploy')
+        properties {
+          pipelineTriggers {
+            triggers {
+              githubPush()
+              pollSCM { scmpoll_spec('H/2 * * * *') }
+            }
+          }
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote { url('${GITHUB_REPO_URL}') }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+      }

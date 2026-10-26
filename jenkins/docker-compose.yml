@@ -1,0 +1,25 @@
+# Jenkins controller for the calculator pipeline.
+#   cp .env.example .env    # fill in your values
+#   docker compose up -d --build
+#   open http://localhost:8085  (log in with JENKINS_ADMIN_ID / JENKINS_ADMIN_PASSWORD)
+
+name: jenkins
+
+services:
+  jenkins:
+    build: .
+    image: calculator-jenkins:latest
+    env_file: .env
+    ports:
+      - "${JENKINS_PORT:-8085}:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      # Pipeline's docker / docker compose commands run against the host Docker daemon
+      - /var/run/docker.sock:/var/run/docker.sock
+    # The socket is owned by root:root (GID 0) on Docker Desktop
+    group_add:
+      - "0"
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
