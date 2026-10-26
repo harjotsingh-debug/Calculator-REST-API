@@ -113,12 +113,30 @@ Set `PROXY_PORT=xxxx` to use a host port other than 8090.
 ## Docker Compose highlights
 
 - `calculator` service with **2 replicas**, an **Nginx** reverse proxy in front, load-balanced through Docker DNS.
+- The Nginx config is baked into a small image ([`nginx/Dockerfile`](nginx/Dockerfile)) instead of bind-mounted, so Compose can deploy from inside the Jenkins container.
 - Dedicated bridge network `calculator-net`, and only the proxy publishes a host port.
 - Health checks on both services, and the proxy starts only after the API is `service_healthy`.
 - `restart: unless-stopped`, plus environment variables (`SERVER_PORT`, `SPRING_PROFILES_ACTIVE`, `JAVA_TOOL_OPTIONS`).
 - Fixed project name `calculator`, so re-running `docker compose up -d` from any directory updates the same stack.
 
 ## Jenkins setup
+
+### Option A: Dockerised Jenkins (recommended, fully automated)
+
+[`jenkins/`](jenkins/) holds a Jenkins image with the Docker CLI, Compose, all required plugins and
+**Configuration as Code** ([`casc.yaml`](jenkins/casc.yaml)). On startup it creates the admin user, the `dockerhub-creds` and
+`smtp-creds` credentials, the `DOCKERHUB_USER` and `NOTIFY_EMAIL` variables, the Gmail SMTP settings and the `calculator-api` pipeline job.
+
+```bash
+cd jenkins
+cp .env.example .env          # fill in repo URL, Docker Hub token, Gmail app password (git-ignored)
+docker compose up -d --build
+# open http://localhost:8085 and log in with JENKINS_ADMIN_ID / JENKINS_ADMIN_PASSWORD
+```
+
+The container uses the host's Docker daemon via `/var/run/docker.sock`, so the pipeline's `docker compose up` deploys the stack on the host.
+
+### Option B: manual setup on an existing Jenkins
 
 1. **Jenkins agent requirements**: Git, JDK 21, Docker and Docker Compose v2. The `jenkins` user must be able to run `docker`, e.g. `sudo usermod -aG docker jenkins` followed by a Jenkins restart.
 2. **Plugins**: Pipeline, Git, GitHub, JUnit, Email Extension, Credentials Binding, Timestamper. The "suggested plugins" set covers most of these.
@@ -136,7 +154,7 @@ Set `PROXY_PORT=xxxx` to use a host port other than 8090.
    - Content type: `application/json`
    - Event: push
 
-   If Jenkins runs on your laptop, expose it with `ngrok http 8080`. If a webhook isn't possible, replace `githubPush()` in the Jenkinsfile with `pollSCM('H/2 * * * *')`.
+   If Jenkins runs on your laptop, expose it with `ngrok http 8080`. If GitHub cannot reach Jenkins, the `pollSCM('H/2 * * * *')` trigger in the Jenkinsfile still picks up every push within 2 minutes.
 
 ### Pipeline stages
 
@@ -145,7 +163,7 @@ Set `PROXY_PORT=xxxx` to use a host port other than 8090.
 | Checkout | `checkout scm` pulls the commit that triggered the build |
 | Build | `./mvnw -B clean package -DskipTests` |
 | Test | `./mvnw -B test` and publishes `target/surefire-reports/*.xml` with the `junit` step. A failing test fails the build |
-| Docker Build | `docker build -t <user>/calculator-api:<BUILD_NUMBER> -t <user>/calculator-api:latest .` |
+| Docker Build | `docker build -t <user>/calculator-api:<BUILD_NUMBER> -t <user>/calculator-api:latest .` and `docker compose build proxy` |
 | Push | `docker login` using `dockerhub-creds` (token piped via `--password-stdin`), then pushes both tags |
 | Deploy | `docker compose up -d --no-build --remove-orphans --wait`, then checks health and an API call through the proxy |
 | Post | email on success/failure (log attached on failure), then prune dangling images |
