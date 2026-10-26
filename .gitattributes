@@ -8,3 +8,6 @@ Dockerfile text eol=lf
 *.conf text eol=lf
 mvnw.cmd text eol=crlf
 *.docx binary
+*.pdf binary
+*.png binary
+*.jpg binary
