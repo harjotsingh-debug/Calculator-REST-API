@@ -6,7 +6,7 @@
 //   * Global env vars (Manage Jenkins -> System -> Global properties):
 //       DOCKERHUB_USER = your Docker Hub username
 //       NOTIFY_EMAIL   = address that receives build notifications
-//   * Plugins: Pipeline, Git, GitHub, JUnit, Email Extension, Credentials Binding
+//   * Plugins: Pipeline, Git, GitHub, JUnit, Coverage, Email Extension, Credentials Binding
 //   * The Jenkins agent needs Docker + Docker Compose v2 and must be able to run "docker" without sudo
 
 pipeline {
@@ -48,12 +48,14 @@ pipeline {
 
         stage('Test') {
             steps {
-                // A failing test makes mvn exit non-zero, which fails the build
+                // A failing test, or line coverage below 80% (JaCoCo check), makes mvn exit non-zero and fails the build
                 sh './mvnw -B test'
             }
             post {
                 always {
                     junit allowEmptyResults: false, testResults: 'target/surefire-reports/*.xml'
+                    recordCoverage tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']],
+                                   sourceCodeRetention: 'EVERY_BUILD'
                 }
             }
         }
