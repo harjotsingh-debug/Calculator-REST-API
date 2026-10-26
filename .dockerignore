@@ -1,0 +1,22 @@
+# Keep the build context small and free of secrets / local artifacts
+target/
+.git/
+.gitignore
+.idea/
+.vscode/
+*.iml
+*.log
+.env
+.env.*
+docs/
+nginx/
+Jenkinsfile
+docker-compose*.yml
+Dockerfile
+.dockerignore
+README.md
+*.docx
+*.pdf
+.mvn/
+mvnw
+mvnw.cmd
