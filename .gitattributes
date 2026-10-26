@@ -1,0 +1,10 @@
+# Shell scripts and pipeline files must keep LF endings, or they break on the Linux Jenkins agent / in Docker
+* text=auto
+mvnw text eol=lf
+*.sh text eol=lf
+Jenkinsfile text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.conf text eol=lf
+mvnw.cmd text eol=crlf
+*.docx binary

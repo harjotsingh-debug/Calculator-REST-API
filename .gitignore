@@ -1,0 +1,40 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+bin/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Secrets / local config - never commit these
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+credentials*
+secrets*
+
+# Office lock files
+~$*
+
+# Assignment brief (not part of the project source)
+*.docx
