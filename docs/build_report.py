@@ -311,8 +311,10 @@ def build():
                                p("A4 - Jenkins job: Test Result Trend (19 passing) and Stage View. Builds #6 and #7 "
                                  "are green across all stages, and #7 was triggered automatically by a push "
                                  "(\"1 commit\").", CAPTION)]))
-    extra = [("email.png", "A5 - Build notification e-mail"),
-             ("dockerhub.png", "A6 - Docker Hub repository with build-number tags"),
+    extra = [("email.png", "A5 - Success e-mails for builds #6, #7 and #8 (email-ext via Gmail SMTP)"),
+             ("dockerhub.png", "A6 - Public Docker Hub repository with build-number tags 6, 7, 8 and latest. Tags 7, 8 and "
+              "latest share one digest: build #8 changed only docs/, which .dockerignore excludes, so every layer "
+              "came from cache and the image was identical."),
              ("docker-ps.png", "A7 - docker ps"),
              ("api-responses.png", "A8 - API responses")]
     for name, caption in extra:
