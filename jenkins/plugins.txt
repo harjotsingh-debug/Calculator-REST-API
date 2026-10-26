@@ -10,3 +10,4 @@ mailer
 credentials-binding
 timestamper
 matrix-project
+coverage
